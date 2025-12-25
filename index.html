@@ -243,7 +243,7 @@ const tariff=6; // ₹ per kWh
 async function fetchData(){
   let d;
   try{
-    const r=await fetch("/data",{cache:"no-store"});
+    const r=await fetch("http://10.92.236.187/data",{cache:"no-store"});
     d=await r.json();
   }catch{
     const c=1+Math.random()*3;
@@ -277,3 +277,4 @@ fetchData();
 </script>
 </body>
 </html>
+
