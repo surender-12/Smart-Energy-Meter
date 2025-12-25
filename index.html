@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Energy Meter — Industrial Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:linear-gradient(180deg,#0f1724,#07101a);
+  --page-bg:#0f1724;
+  --card-bg:rgba(255,255,255,.03);
+  --text:#e6eef6;
+  --muted:#9aa7bd;
+  --accent:#00aaff;
+  --accent2:#ff9800;
+  --border:rgba(255,255,255,.08);
+}
+
+body.light{
+  --bg:none;
+  --page-bg:#f3f5f7;
+  --card-bg:#fff;
+  --text:#0f1724;
+  --muted:#6b7280;
+  --border:rgba(0,0,0,.08);
+}
+
+*{box-sizing:border-box;font-family:Inter}
+body{margin:0;background:var(--bg);color:var(--text);transition:.3s}
+.wrap{max-width:1200px;margin:24px auto;padding:20px}
+
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{
+  width:56px;height:56px;border-radius:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:white;font-size:20px;
+}
+.lead{font-size:13px;color:var(--muted)}
+
+.theme-btn{
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+  cursor:pointer;
+}
+
+/* FACTORY ICON */
+.factory-icon{
+  position:relative;
+  font-size:110px;
+  color:var(--accent);
+  text-shadow:0 0 15px var(--accent),0 0 40px var(--accent2);
+  animation:pulse 2.2s infinite;
+}
+.factory-icon i{font-size:110px}
+
+.smoke{
+  position:absolute;
+  top:-10px;
+  width:16px;height:16px;
+  background:rgba(200,200,200,.6);
+  border-radius:50%;
+  filter:blur(2px);
+  animation:smoke 3.5s infinite;
+  opacity:0;
+}
+.s1{left:22px}
+.s2{left:42px;animation-delay:1.2s}
+.s3{left:62px;animation-delay:2.2s}
+
+@keyframes smoke{
+  0%{transform:translateY(0) scale(.8);opacity:0}
+  30%{opacity:.6}
+  100%{transform:translateY(-45px) scale(1.6);opacity:0}
+}
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.07)}
+}
+
+.expand-icon{
+  margin-top:12px;
+  display:inline-block;
+  padding:8px 16px;
+  border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:white;font-weight:600;
+}
+
+.expanded{display:none;margin-top:20px}
+.gauges{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+}
+
+.gauge-card{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+}
+
+/* COST */
+.cost-box{
+  margin-top:16px;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  font-weight:600;
+}
+
+.history-box{
+  margin-top:20px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+}
+
+footer{text-align:center;margin-top:18px;color:var(--muted);font-size:13px}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <div class="logo">EM</div>
+    <div>
+      <h2>Smart Energy Meter</h2>
+      <p class="lead">Industrial Energy Monitoring</p>
+    </div>
+  </div>
+
+  <button class="theme-btn" id="themeToggle">
+    <span id="themeIcon">🌙</span>
+    <span id="themeLabel">Dark</span>
+  </button>
+</header>
+
+<div class="card" id="homeCard">
+
+  <div class="factory-icon">
+    <i class="fa-solid fa-industry"></i>
+    <span class="smoke s1"></span>
+    <span class="smoke s2"></span>
+    <span class="smoke s3"></span>
+  </div>
+
+  <p class="lead">Tap to view industrial power analytics</p>
+  <div class="expand-icon" id="chev">Open</div>
+
+  <div class="expanded" id="expanded">
+
+    <!-- GAUGES -->
+    <div class="gauges">
+      <div class="gauge-card"><canvas id="gCurrent"></canvas><p>Current (A)</p></div>
+      <div class="gauge-card"><canvas id="gVoltage"></canvas><p>Voltage (V)</p></div>
+      <div class="gauge-card"><canvas id="gPower"></canvas><p>Power (W)</p></div>
+      <div class="gauge-card"><canvas id="gMinMax"></canvas><p>Max Current (A)</p></div>
+    </div>
+
+    <!-- COST -->
+    <div class="cost-box">
+      <div>Total Energy: <span id="energyVal">0</span> kWh</div>
+      <div>Cost: ₹<span id="costVal">0</span></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="history-box">
+      <canvas id="historyChart" height="120"></canvas>
+    </div>
+
+  </div>
+</div>
+
+<footer>Powered by ESP8266 • Industrial IoT</footer>
+</div>
+
+<script>
+/* THEME */
+themeToggle.onclick=e=>{
+  e.stopPropagation();
+  document.body.classList.toggle("light");
+  themeIcon.textContent=document.body.classList.contains("light")?"☀️":"🌙";
+  themeLabel.textContent=document.body.classList.contains("light")?"Light":"Dark";
+};
+
+/* EXPAND */
+let open=false;
+homeCard.onclick=()=>{
+  open=!open;
+  expanded.style.display=open?"block":"none";
+  chev.textContent=open?"Close":"Open";
+};
+
+/* GAUGE FUNCTION */
+function gauge(ctx,max){
+  return new Chart(ctx,{
+    type:"doughnut",
+    data:{datasets:[{data:[0,max],backgroundColor:["#00aaff","#16324b"],borderWidth:0}]},
+    options:{rotation:-90,circumference:180,cutout:"70%",plugins:{legend:{display:false}}}
+  });
+}
+
+const gC=gauge(gCurrent,10);
+const gV=gauge(gVoltage,260);
+const gP=gauge(gPower,3000);
+const gM=gauge(gMinMax,10);
+
+/* HISTORY */
+const hLabels=[],hData=[];
+const hChart=new Chart(historyChart,{
+  type:"line",
+  data:{labels:hLabels,datasets:[{data:hData,borderColor:"#00aaff",fill:true,backgroundColor:"rgba(0,170,255,.12)",tension:.3,pointRadius:0}]},
+  options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{beginAtZero:true}}}
+});
+
+/* ENERGY + COST */
+let energy=0;
+const tariff=6; // ₹ per kWh
+
+async function fetchData(){
+  let d;
+  try{
+    const r=await fetch("/data",{cache:"no-store"});
+    d=await r.json();
+  }catch{
+    const c=1+Math.random()*3;
+    d={current:c,voltage:230,power:c*230};
+  }
+
+  const c=d.current||0;
+  const v=d.voltage||230;
+  const p=d.power||c*v;
+
+  energy+=p/3600000; // watt-second to kWh
+
+  energyVal.textContent=energy.toFixed(4);
+  costVal.textContent=(energy*tariff).toFixed(2);
+
+  gC.data.datasets[0].data=[c,10-c];
+  gV.data.datasets[0].data=[v,260-v];
+  gP.data.datasets[0].data=[p,3000-p];
+  gM.data.datasets[0].data=[Math.max(...hData.concat(c)),10];
+
+  [gC,gV,gP,gM].forEach(g=>g.update());
+
+  hLabels.push(new Date().toLocaleTimeString());
+  hData.push(c);
+  if(hData.length>60){hData.shift();hLabels.shift()}
+  hChart.update();
+}
+
+setInterval(()=>{if(open) fetchData()},1000);
+fetchData();
+</script>
+</body>
+</html>
